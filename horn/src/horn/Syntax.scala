@@ -49,7 +49,7 @@ object Prog extends Parseable(Parser.methods) {}
 
 case class Assume(phi: Expr) extends Prog
 case class Assert(phi: Expr) extends Prog
-case class Assign(x: Var, rhs: Expr) extends Prog
+case class Assign(lhs: List[Var], rhs: List[Expr]) extends Prog
 case class If(test: Expr, left: List[Prog], right: List[Prog]) extends Prog
 case class While(test: Expr, body: List[Prog]) extends Prog
 

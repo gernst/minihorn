@@ -8,10 +8,14 @@ case class PredDecl(
     method: String,
     name: String,
     index: Int,
-    args: List[Type]
+    types: List[Type]
 ) {
-  val identifier = method + "_" + name + "_" + index
-  def apply(args: List[Expr]) = App(identifier, args)
+  val identifier =
+    if (index >= 0)
+      method + "_" + name + "_" + index
+    else method + "_" + name
+
+  def apply(args: List[Expr]) = App(identifier, args take types.length) // XXX: bad hack to generate pre/post without locals
 }
 
 case class Clause(vars: List[VarDecl], prems: List[Expr], concl: Expr) {
@@ -19,7 +23,7 @@ case class Clause(vars: List[VarDecl], prems: List[Expr], concl: Expr) {
   else prems.mkString("(and ", "\n             ", ")")
 }
 
-class Horn(method: Method) {
+class Horn(val method: Method) {
   val Method(_, formals, results, requires, ensures, Body(locals, progs)) =
     method
 
@@ -31,12 +35,15 @@ class Horn(method: Method) {
   val preds = mutable.Buffer[PredDecl]()
   val clauses = mutable.Buffer[Clause]()
 
+  val pre = newPred("pre", formals map (_.typ), -1)
+  val post = newPred("post", (formals ++ results) map (_.typ), -1)
+
   def not(phi: Expr) = {
     App("!", List(phi))
   }
 
-  def newPred(name: String, types: List[Type] = types) = {
-    val decl = PredDecl(method.name, name, index, types)
+  def newPred(name: String, types: List[Type] = types, next: Int = index) = {
+    val decl = PredDecl(method.name, name, next, types)
     index += 1
     preds += decl
     decl
@@ -47,9 +54,56 @@ class Horn(method: Method) {
     clauses += clause
   }
 
-  def problem: Problem = {
-    val pre = newPred("pre")
-    val post = newPred("post")
+  def problem(all: List[Horn]): Problem = {
+    def translate(pre: PredDecl, progs: List[Prog], post: PredDecl) {
+      progs match {
+        case Nil =>
+          newClause(List(pre(vars)), post(vars))
+
+        case Assume(phi) :: rest =>
+          val pred = newPred("assume")
+          newClause(List(pre(vars), phi), pred(vars))
+          translate(pred, rest, post)
+
+        case Assert(phi) :: rest =>
+          newClause(List(pre(vars)), phi)
+          translate(pre, rest, post)
+
+        case Assign(lhs, List(App(fun, args))) :: rest
+            if all.exists(_.method.name == fun) =>
+          val Some(that) = all.find(_.method.name == fun)
+          val call = that.post(args ++ lhs)
+          val pred = newPred("call")
+          newClause(List(pre(vars), call), pred(vars))
+          translate(pred, rest, post)
+
+        case Assign(lhs, rhs) :: rest =>
+          assert(lhs.length == rhs.length)
+
+          val map = Map(lhs zip rhs: _*)
+
+          val vars_ = vars map {
+            case x if map contains x => map(x)
+            case y                   => y
+          }
+
+          val pred = newPred("assign")
+          newClause(List(pre(vars)), pred(vars_))
+          translate(pred, rest, post)
+
+        case If(test, left, right) :: rest =>
+          val pred = newPred("join")
+          translate(pre, Assume(test) :: left, pred)
+          translate(pre, Assume(not(test)) :: right, pred)
+          translate(pred, rest, post)
+
+        case While(test, body) :: rest =>
+          val pred = newPred("invariant")
+          newClause(List(pre(vars)), pred(vars))
+          translate(pred, Assume(test) :: body, pred)
+          translate(pred, Assume(not(test)) :: rest, post)
+      }
+    }
 
     newClause(requires, pre(vars))
 
@@ -59,45 +113,5 @@ class Horn(method: Method) {
       newClause(List(post(vars)), phi)
 
     Problem(preds.toList, clauses.toList)
-  }
-
-  def translate(pre: PredDecl, progs: List[Prog], post: PredDecl) {
-    progs match {
-      case Nil =>
-        newClause(List(pre(vars)), post(vars))
-
-      case Assume(phi) :: rest =>
-        val pred = newPred("assume")
-        newClause(List(pre(vars), phi), pred(vars))
-        translate(pred, rest, post)
-
-      case Assert(phi) :: rest =>
-        newClause(List(pre(vars)), phi)
-        translate(pre, rest, post)
-
-      case Assign(x, rhs) :: rest =>
-        assert(formals.forall(_.x != x))
-
-        val vars_ = vars map {
-          case `x` => rhs
-          case y   => y
-        }
-
-        val pred = newPred("assign")
-        newClause(List(pre(vars)), pred(vars_))
-        translate(pred, rest, post)
-
-      case If(test, left, right) :: rest =>
-        val pred = newPred("join")
-        translate(pre, Assume(test) :: left, pred)
-        translate(pre, Assume(not(test)) :: right, pred)
-        translate(pred, rest, post)
-
-      case While(test, body) :: rest =>
-        val pred = newPred("invariant")
-        newClause(List(pre(vars)), pred(vars))
-        translate(pred, Assume(test) :: body, pred)
-        translate(pred, Assume(not(test)) :: rest, post)
-    }
   }
 }

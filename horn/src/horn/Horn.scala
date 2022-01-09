@@ -8,7 +8,7 @@ case class PredDecl(
     method: String,
     name: String,
     index: Int,
-    args: List[Type]
+    types: List[Type]
 ) {
   val identifier = method + "_" + name + "_" + index
   def apply(args: List[Expr]) = App(identifier, args)
@@ -23,7 +23,7 @@ class Horn(method: Method) {
   val Method(_, formals, results, requires, ensures, Body(locals, progs)) =
     method
 
-  def problem: Problem = {
+  def problem(all: List[Horn]): Problem = {
     ???
   }
 }

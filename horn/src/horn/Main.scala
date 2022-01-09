@@ -20,23 +20,33 @@ object Main {
 
     out.println("(set-logic HORN)")
     out.println("(set-option :produce-models true)")
-    for (method <- methods) {
-      val horn = new Horn(method)
-      val Problem(decls, clauses) = horn.problem
-      for (decl <- decls)
-        out.println(decl)
-      for (clause <- clauses)
-        out.println(clause)
-      out.println("(check-sat)")
-      out.println("(get-model)")
+
+    val horns = methods map { method =>
+      new Horn(method)
     }
+
+    val results = horns map { horn =>
+      val Problem(decls, clauses) = horn.problem(horns)
+      (decls, clauses)
+    }
+
+    val (decls, clauses) = results.unzip
+
+    for (decl <- decls.flatten)
+      print(out, decl)
+
+    for (clause <- clauses.flatten)
+      print(out, clause)
+
+    out.println("(check-sat)")
+    out.println("(get-model)")
   }
 
   def print(out: PrintStream, decl: PredDecl) {
     import decl._
 
     out.println(
-      "(declare-fun " + identifier + " " + args.mkString(
+      "(declare-fun " + identifier + " " + types.mkString(
         "(",
         " ",
         ")"

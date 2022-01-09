@@ -20,7 +20,18 @@ object Parser {
   val vr = P(Var(name))
 
   val expr: Parser[Expr] = M(inner, op, App, Syntax)
-  val inner = parens(expr) | num | vr
+  val inner = P(parens(expr) | num | app)
+
+  val vrs = vr  ~+ ","
+  val exprs = expr  ~+ ","
+
+  val args = parens(exprs)
+  val app = name ~ args.? map {
+    case (name, None) =>
+      Var(name)
+    case (fun, Some(args)) =>
+      App(fun, args)
+  }
 
   val prog: Parser[Prog] = P(assume | assert | if_ | while_ | assign)
   val progs = prog.*
@@ -28,7 +39,7 @@ object Parser {
 
   val assume = Assume("assume" ~ expr ~ ";")
   val assert = Assert("assert" ~ expr ~ ";")
-  val assign = Assign(vr ~ ":=" ~ expr ~ ";")
+  val assign = Assign(vrs ~ ":=" ~ exprs ~ ";")
 
   val else_ = "else" ~ block | ret(Nil)
   val if_ = If("if" ~ expr ~ block ~ else_)
@@ -48,7 +59,9 @@ object Parser {
   val ensures = ensure.*
 
   val method = Method(
-    "method" ~ name ~ parens(vardecls) ~ "returns" ~ parens(vardecls) ~ requires ~ ensures ~ body
+    "method" ~ name ~ parens(vardecls) ~ "returns" ~ parens(
+      vardecls
+    ) ~ requires ~ ensures ~ body
   )
 
   val methods = method.*

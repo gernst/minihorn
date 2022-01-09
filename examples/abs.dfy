@@ -9,3 +9,14 @@ method abs(x: int)
         y := -x;
     }
 }
+
+method caller()
+    returns ()
+{
+    var a: int;
+    var b: int;
+
+    b := abs(a);
+
+    assert b >= 0;
+}
