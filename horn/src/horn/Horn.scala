@@ -72,9 +72,11 @@ class Horn(val method: Method) {
         case Assign(lhs, List(App(fun, args))) :: rest
             if all.exists(_.method.name == fun) =>
           val Some(that) = all.find(_.method.name == fun)
-          val call = that.post(args ++ lhs)
+          val call1 = that.pre(args)
+          newClause(List(pre(vars)), call1)
+          val call2 = that.post(args ++ lhs)
           val pred = newPred("call")
-          newClause(List(pre(vars), call), pred(vars))
+          newClause(List(pre(vars), call2), pred(vars))
           translate(pred, rest, post)
 
         case Assign(lhs, rhs) :: rest =>

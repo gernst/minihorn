@@ -1,7 +1,7 @@
 (set-logic HORN)
 (set-option :produce-models true)
-(declare-fun add_pre_0 (Int Int Int Int) Bool)
-(declare-fun add_post_1 (Int Int Int Int) Bool)
+(declare-fun add_pre (Int Int) Bool)
+(declare-fun add_post (Int Int Int) Bool)
 (declare-fun add_assign_2 (Int Int Int Int) Bool)
 (declare-fun add_assign_3 (Int Int Int Int) Bool)
 (declare-fun add_invariant_4 (Int Int Int Int) Bool)
@@ -12,10 +12,10 @@
 (assert
   (forall ((x Int) (y Int) (s Int) (r Int))
     (=> (and (>= x 0))
-        (add_pre_0 x y s r))))
+        (add_pre x y))))
 (assert
   (forall ((x Int) (y Int) (s Int) (r Int))
-    (=> (and (add_pre_0 x y s r))
+    (=> (and (add_pre x y))
         (add_assign_2 x y s x))))
 (assert
   (forall ((x Int) (y Int) (s Int) (r Int))
@@ -50,10 +50,10 @@
 (assert
   (forall ((x Int) (y Int) (s Int) (r Int))
     (=> (and (add_assume_8 x y s r))
-        (add_post_1 x y s r))))
+        (add_post x y s))))
 (assert
   (forall ((x Int) (y Int) (s Int) (r Int))
-    (=> (and (add_post_1 x y s r))
+    (=> (and (add_post x y s))
         (= s (+ x y)))))
 (check-sat)
 (get-model)

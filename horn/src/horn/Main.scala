@@ -5,7 +5,7 @@ import java.io.PrintStream
 
 object Main {
   def main(args: Array[String]) {
-    verify("examples/loop.dfy")
+    verify("examples/abs.dfy")
   }
 
   def verify(file: String) {
