@@ -60,9 +60,8 @@ class Horn(val method: Method) {
     decl
   }
 
-  def newClause(prems: List[Expr], concl: Expr, comment: String) = {
-    val clause = Clause(scope, prems, concl, comment)
-    clauses += clause
+  def newClause(prems: List[Expr], concl: Expr, comment: String): Unit = {
+    newClause(Nil, prems, concl, comment)
   }
 
   def newClause(
@@ -70,8 +69,8 @@ class Horn(val method: Method) {
       prems: List[Expr],
       concl: Expr,
       comment: String
-  ) = {
-    val clause = Clause(scope ++ fresh, prems, concl, comment)
+  ): Unit = {
+    val clause = Clause(scope, prems, concl, "method " + method.name + ": " + comment)
     clauses += clause
   }
 
