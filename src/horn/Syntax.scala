@@ -9,6 +9,11 @@ case class Sort(name: String) extends Type {
   }
 }
 
+object Sort {
+  val int = Sort("int")
+  val bool = Sort("bool")
+}
+
 case class ADT(name: String, params: List[Type]) extends Type {
   override def toString = (name :: params).mkString("(", " ", ")")
 }
@@ -20,7 +25,9 @@ case class VarDecl(x: Var, typ: Type) {
 sealed trait Expr
 
 case class Num(n: Int) extends Expr {
-  override def toString = n.toString
+  override def toString = 
+    if(n >= 0) n.toString
+    else "(- " + (-n).toString + ")"
 }
 
 case class Var(name: String) extends Expr {
@@ -49,7 +56,7 @@ case class App(fun: String, args: List[Expr]) extends Expr {
 }
 
 sealed trait Rhs
-case class New(constr: String, args: List[Expr]) extends Rhs
+case class New(constr: ADT, args: List[Expr]) extends Rhs
 case class Call(obj: Expr, op: String, args: List[Expr]) extends Rhs
 case class Exprs(rhs: List[Expr]) extends Rhs
 

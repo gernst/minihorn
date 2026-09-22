@@ -19,6 +19,7 @@ object Main {
 
     out.println("(set-logic HORN)")
     out.println("(set-option :produce-models true)")
+    out.println()
 
     val horns = methods map { method =>
       new Horn(method)
@@ -33,6 +34,8 @@ object Main {
 
     for (decl <- decls.flatten)
       print(out, decl)
+
+    out.println()
 
     for (clause <- clauses.flatten)
       print(out, clause)
@@ -56,9 +59,12 @@ object Main {
   def print(out: PrintStream, clause: Clause) = {
     import clause._
 
+    out.println("; " + comment)
     out.println("(assert")
     out.println("  (forall " + vars.mkString("(", " ", ")"))
     out.println("    (=> " + formatPrems)
     out.println("        " + concl + ")))")
+
+    out.println()
   }
 }

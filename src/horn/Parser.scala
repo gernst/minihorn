@@ -103,7 +103,7 @@ object Parser extends RegexParsers {
     "assert" ~> expr <~ ";" ^^ { Assert(_) }
 
   val new_ =
-    "new" ~> name ~ parens(args) ^^ { case n ~ es =>
+    "new" ~> adt ~ parens(args) ^^ { case n ~ es =>
       New(n, es)
     }
 
