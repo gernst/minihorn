@@ -5,6 +5,9 @@ import java.io.File
 import scala.io.Source
 
 object Parser extends RegexParsers {
+  override val whiteSpace =
+     """(\s+|//[^\r\n]*|/\*(?s:.*?)\*/)+""".r
+
   def parens[A](p: Parser[A]) =
     "(" ~> p <~ ")"
 
@@ -71,7 +74,7 @@ object Parser extends RegexParsers {
     assoc("+" | "-", product, LeftOp)
 
   val prop =
-    nonassoc("<" | "<=" | "==" | "!=" | ">=" | ">", product, InfixOp)
+    nonassoc("<" | "<=" | "==" | "!=" | ">=" | ">", sum, InfixOp)
 
   val conj =
     assoc("&&", prop, LeftOp)
@@ -233,7 +236,7 @@ object Parser extends RegexParsers {
     }
 
     def from(file: File): T = {
-      from(Source.fromFile(file).getLines().mkString)
+      from(Source.fromFile(file).getLines().mkString("\n"))
     }
 
     def fromFile(file: String): T = {

@@ -47,13 +47,14 @@ object Builtin {
   }
 
   def new_(
+      var_ : String,
       adt: String,
       params: List[Type],
       args: List[Expr]
   ): (List[VarDecl], List[Expr]) = {
     (adt, params) match {
       case ("Stack", List(typ)) =>
-        val elem = Var(adt + ".fresh")
+        val elem = Var(var_ + ".elem")
         val fresh = List(VarDecl(elem, typ))
         val rhs = List(Num(0), Num(0), Num(-1), elem)
         (fresh, rhs)
@@ -64,7 +65,7 @@ object Builtin {
   }
 
   def call(
-    method: String,
+      method: String,
       var_ : String,
       adt: String,
       params: List[Type],

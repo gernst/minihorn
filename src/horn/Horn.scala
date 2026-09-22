@@ -70,7 +70,7 @@ class Horn(val method: Method) {
       concl: Expr,
       comment: String
   ): Unit = {
-    val clause = Clause(scope, prems, concl, "method " + method.name + ": " + comment)
+    val clause = Clause(scope ++ fresh, prems, concl, "method " + method.name + ": " + comment)
     clauses += clause
   }
 
@@ -117,7 +117,7 @@ class Horn(val method: Method) {
         case Assign(List(Var(var_)), New(ADT(adt, params), args)) :: rest =>
           val lhs = Builtin.obj(var_, adt, params)
 
-          val (fresh, rhs) = Builtin.new_(adt, params, args)
+          val (fresh, rhs) = Builtin.new_(var_, adt, params, args)
 
           val map = Map(lhs zip rhs*)
 
