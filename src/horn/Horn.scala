@@ -39,6 +39,8 @@ class Horn(val method: Method) {
   val preds = mutable.Buffer[PredDecl]()
   val clauses = mutable.Buffer[Clause]()
 
+  val inputs = formals // ++ (locals.filter(!_.typ.isInstanceOf[ADT]))
+
   val scope0 = formals ++ results ++ locals
   val scope = flatten(scope0)
   val vars = scope map (_.x)
@@ -80,7 +82,7 @@ class Horn(val method: Method) {
 
       case VarDecl(Var(var_), ADT(adt, params)) :: rest =>
         for (
-          (name, types) <- Builtin.preds(var_, adt, params, formals.map(_.typ))
+          (name, types) <- Builtin.preds(var_, adt, params, inputs.map(_.typ))
         ) {
           newPred(name, types, -1)
         }
@@ -134,9 +136,8 @@ class Horn(val method: Method) {
           val Some(VarDecl(_, ADT(adt, params))) = scope0.find(_.x == x)
           val obj = Builtin.obj(var_, adt, params)
 
-          val inputs = formals.map(_.x)
           val (checks, transitions) =
-            Builtin.call(method.name, var_, adt, params, obj, op, args, inputs)
+            Builtin.call(method.name, var_, adt, params, obj, op, args, inputs.map(_.x))
           val pred = newPred("call")
 
           for ((fresh, phi, check) <- checks) {

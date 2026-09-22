@@ -1,11 +1,11 @@
-method test()
+method test(x: int)
 {
   var stack: Stack<int>;
   var z: int;
 
   stack := new Stack<int>();
 
-  stack.push(1);
+  stack.push(x);
   z := stack.pop();
-  assert z == 1;
+  assert z == x;
 }
